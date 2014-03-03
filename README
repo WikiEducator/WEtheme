@@ -1,0 +1,21 @@
+STATUS:
+======
+
+This software is VERY NEW.  There are bugs and missing features.
+
+INSTALLATION:
+============
+
+1. Rename this directory to extensions/WETitle inside your
+   MediaWiki directory.
+3. Add this line to the end of your LocalSettings.php:
+   require_once('extensions/WETitle/WETitle.php');
+
+CONTACT:
+=======
+
+* Jim Tittsler
+* jim@cite.org.nz
+* jtittsler@gmail.com (email or jabber)
+* jimt in #wikieducator on irc.freenode.net
+
