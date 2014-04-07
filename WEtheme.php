@@ -4,7 +4,7 @@
 * @package MediaWiki
 * @ingroup Extensions
 * @subpackage WEtheme
-* @version 0.2
+* @version 0.3
 * @author Jim Tittsler <jim@OERfoundation.org>
 * @licence MIT
 */
@@ -16,7 +16,7 @@ if( !defined( 'MEDIAWIKI' ) ) {
 
 $wgExtensionCredits['parserhook'][] = array(
 	'name'           => 'WEtheme',
-	'version'        => '0.2.0',
+	'version'        => '0.3.0',
 	'url'            => 'http://WikiEducator.org/Extension:WEtheme',
 	'author'         => '[http://WikiEducator.org/User:JimTittsler Jim Tittsler]',
 	'description'    => 'Allow theming pages',
@@ -24,7 +24,7 @@ $wgExtensionCredits['parserhook'][] = array(
 
 $GLOBALS['weTheme'] = array();
 $wgHooks['ParserFirstCallInit'][] = 'weThemeInit';
-$wgHooks['ParserAfterTidy'][] = 'weThemeHeaders';
+$wgHooks['OutputPageBeforeHTML'][] = 'weThemeHeaders';
 
 function weThemeInit( Parser $parser ) {
 	$parser->setHook( 'wetheme', 'weThemeTag' );
@@ -36,63 +36,65 @@ function weThemeLog( $msg ) {
 }
 
 function weThemeTag( $input, array $args, Parser $parser ) {
-	global $weTheme;
-	$partners = array('WikiEducator', 'OERf', 'UCan', 'OP');
-	//weThemeLog("wetheme " . getcwd() . " input=$input args=". print_r($args, true));
-	if (array_key_exists('t', $args)) {
-		// check it is a partner, and the required file(s) exist
-		$p = $args['t'];
-		//weThemeLog("partner $p");
-		if (in_array($p, $partners)) {
-			//weThemeLog("partner theme $p");
-			if (is_readable(dirname(__FILE__) . "/$p/$p.css")) {
-				//weThemeLog("  adding css");
-				$weTheme[] = "/extensions/WEtheme/$p/$p.css";
+	global $wgWEthemePartners;
+	// FIXME add author, keywords
+	$weThemeArgs = array( 'p', 'css', 'js', 'viewport', 'ie' );
+	$r = array();
+	if ( array_key_exists('p', $args) ) {
+		$p = $args['p'];
+	       	if ( array_key_exists($args['p'], $wgWEthemePartners) ) {
+			//embed marker in wikitext
+			foreach ( $weThemeArgs as $a ) {
+				if ( array_key_exists( $a, $args ) ) {
+					$r[$a] = $args[$a];
+				}
 			}
-			if (is_readable(dirname(__FILE__) . "/$p/$p.js")) {
-				//weThemeLog("  adding js");
-				$weTheme[] = "/extensions/WEtheme/$p/$p.js";
-			}
-		}
-		if (array_key_exists('s', $args)) {
-			// use s for a subtheme name
-			$s = preg_replace('/[^-._a-zA-Z0-9]/', '', $args['s']);
-			//weThemeLog("partner $p");
-			//weThemeLog("partner subtheme $s");
-			if (is_readable(dirname(__FILE__) . "/$p/$s.css")) {
-				//weThemeLog("  adding css");
-				$weTheme[] = "/extensions/WEtheme/$p/$s.css";
-			}
-			if (is_readable(dirname(__FILE__) . "/$p/$s.js")) {
-				//weThemeLog("  adding js");
-				$weTheme[] = "/extensions/WEtheme/$p/$s.js";
-			}
+			return '<!-- WEtheme ' . base64_encode( json_encode( $r ) ) . ' -->';
 		}
 	}
-	return "";
+	return '';
 }
 
-function endsWith($haystack, $needle) {
-	$length = strlen($needle);
-	if ($length == 0) {
-		return true;
-	}
-
-	return (substr($haystack, -$length) === $needle);
-}
-
-function weThemeHeaders( Parser $parser, $text ){
-	global $weTheme;
+function weThemeHeaders( OutputPage &$out, &$text ){
 	global $wgOut;
+	global $wgWEthemePartners, $wgWEthemePrefix;
 
-	//weThemeLog("checking if we need to add WEtheme headers, count: " . count($weTheme));
-	if ( count($weTheme) ) {
-		//weThemeLog("  adding headers");
-		foreach ($weTheme as $f) {
-			if (endsWith($f, '.css')) {
-				$wgOut->addScript('<link href="' . $f . '" rel="stylesheet" type="text/css">' . "\n");
-			} elseif (endswith($f, '.js')) {
-				$wgOut->addScript('<script type="text/javascript" src="' . $f . '"></script>' . "\n");
+	// look for our magic comment, and add headers when detected
+	//   perform simple sanity check on validity
+	//weThemeLog("checking if we need to add WEtheme headers");
+	if ( preg_match_all(
+		'|<!-- WEtheme ([=+/a-zA-Z0-9]+)|',
+		$text, $matches) == false ) {
+			return true;
+	}
+	foreach ( $matches[1] as $m ) {
+		$r = json_decode( @base64_decode( $m ) );
+
+		if ( array_key_exists('p', $r)
+		&& array_key_exists( $r->p, $wgWEthemePartners ) ) {
+			$p = $wgWEthemePartners[$r->p];
+			if ( array_key_exists( 'ie', $r ) ) {
+				$wgOut->addScript('<!--['
+					. preg_replace( '/[^- a-zA-Z0-9]/', '', $r->ie ). ']>');
+			}
+			if ( array_key_exists( 'css', $r ) ) {
+				$f = preg_replace( '|[^-_:./a-zA-Z0-9]|', '',
+					$r->css );
+				$wgOut->addScript('<link href="' . $p . $f . '" rel="stylesheet" type="text/css">' . "\n");
+			}
+			if ( array_key_exists( 'js', $r ) ) {
+				$f = preg_replace( '|[^-_:./a-zA-Z0-9]|', '',
+					$r->js );
+				$wgOut->addScript('<script type="text/javascript" src="' . $p . $f . '"></script>' . "\n");
+			}
+			if ( array_key_exists( 'viewport', $r ) ) {
+				//FIXME do a decent job of sanitizing viewport
+				$f = preg_replace( '/[^-=., a-zA-Z0-9]/',
+					'', $r->viewport);
+				$wgOut->addScript('<meta name="viewport" content="' . $f . ' />' . "\n");
+			}
+			if ( array_key_exists( 'ie', $r ) ) {
+				$wgOut->addScript('<![endif]-->');
 			}
 		}
 	}

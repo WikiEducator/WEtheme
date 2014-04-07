@@ -1,2 +1,0 @@
-example institution theme directory
-
