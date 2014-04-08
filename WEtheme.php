@@ -16,7 +16,7 @@ if( !defined( 'MEDIAWIKI' ) ) {
 
 $wgExtensionCredits['parserhook'][] = array(
 	'name'           => 'WEtheme',
-	'version'        => '0.4.0',
+	'version'        => '0.4.1',
 	'url'            => 'http://WikiEducator.org/Extension:WEtheme',
 	'author'         => '[http://WikiEducator.org/User:JimTittsler Jim Tittsler]',
 	'description'    => 'Allow theming pages',
@@ -98,6 +98,8 @@ function weThemeHeaders( OutputPage &$out, &$text ){
 					'', $r->header);
 				$f = preg_replace( '/\.{2,}/', '.', $f);
 				$pathname = "$IP/$p$f";
+				$pathname = preg_replace( '|\/{2,}|', '/',
+					$pathname );
 				if ( is_readable( $pathname ) ) {
 					$h = fopen( $pathname, 'r' );
 					$o = fread( $h, filesize( $pathname ) );
