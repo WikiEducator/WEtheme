@@ -4,7 +4,7 @@
 * @package MediaWiki
 * @ingroup Extensions
 * @subpackage WEtheme
-* @version 0.3
+* @version 0.4
 * @author Jim Tittsler <jim@OERfoundation.org>
 * @licence MIT
 */
@@ -16,7 +16,7 @@ if( !defined( 'MEDIAWIKI' ) ) {
 
 $wgExtensionCredits['parserhook'][] = array(
 	'name'           => 'WEtheme',
-	'version'        => '0.3.0',
+	'version'        => '0.4.0',
 	'url'            => 'http://WikiEducator.org/Extension:WEtheme',
 	'author'         => '[http://WikiEducator.org/User:JimTittsler Jim Tittsler]',
 	'description'    => 'Allow theming pages',
@@ -38,7 +38,7 @@ function weThemeLog( $msg ) {
 function weThemeTag( $input, array $args, Parser $parser ) {
 	global $wgWEthemePartners;
 	// FIXME add author, keywords
-	$weThemeArgs = array( 'p', 'css', 'js', 'viewport', 'ie' );
+	$weThemeArgs = array( 'p', 'css', 'js', 'viewport', 'ie', 'header' );
 	$r = array();
 	if ( array_key_exists('p', $args) ) {
 		$p = $args['p'];
@@ -56,7 +56,7 @@ function weThemeTag( $input, array $args, Parser $parser ) {
 }
 
 function weThemeHeaders( OutputPage &$out, &$text ){
-	global $wgOut;
+	global $wgOut, $IP;
 	global $wgWEthemePartners, $wgWEthemePrefix;
 
 	// look for our magic comment, and add headers when detected
@@ -92,6 +92,18 @@ function weThemeHeaders( OutputPage &$out, &$text ){
 				$f = preg_replace( '/[^-=., a-zA-Z0-9]/',
 					'', $r->viewport);
 				$wgOut->addScript('<meta name="viewport" content="' . $f . ' />' . "\n");
+			}
+			if ( array_key_exists( 'header', $r ) ) {
+				$f = preg_replace( '/[^-=., a-zA-Z0-9]/',
+					'', $r->header);
+				$f = preg_replace( '/\.{2,}/', '.', $f);
+				$pathname = "$IP/$p$f";
+				if ( is_readable( $pathname ) ) {
+					$h = fopen( $pathname, 'r' );
+					$o = fread( $h, filesize( $pathname ) );
+					fclose( $h );
+					$wgOut->addScript ( $o ) ;
+				}
 			}
 			if ( array_key_exists( 'ie', $r ) ) {
 				$wgOut->addScript('<![endif]-->');
