@@ -28,8 +28,7 @@ Please see the
 ## CONTACT
 
 * Jim Tittsler
-* jim@OERfoundation.org
-* jimt in #wikieducator on irc.freenode.net
+* jimt@OER.me
 
 ## LICENSE
 
