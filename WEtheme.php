@@ -4,8 +4,8 @@
 * @package MediaWiki
 * @ingroup Extensions
 * @subpackage WEtheme
-* @version 0.4
-* @author Jim Tittsler <jim@OERfoundation.org>
+* @version 0.5
+* @author Jim Tittsler <jimt@OER.me>
 * @licence MIT
 */
 
@@ -16,7 +16,7 @@ if( !defined( 'MEDIAWIKI' ) ) {
 
 $wgExtensionCredits['parserhook'][] = array(
 	'name'           => 'WEtheme',
-	'version'        => '0.4.1',
+	'version'        => '0.5.0',
 	'url'            => 'http://WikiEducator.org/Extension:WEtheme',
 	'author'         => '[http://WikiEducator.org/User:JimTittsler Jim Tittsler]',
 	'description'    => 'Allow theming pages',
@@ -38,7 +38,7 @@ function weThemeLog( $msg ) {
 function weThemeTag( $input, array $args, Parser $parser ) {
 	global $wgWEthemePartners;
 	// FIXME add author, keywords
-	$weThemeArgs = array( 'p', 'css', 'js', 'viewport', 'ie', 'header' );
+	$weThemeArgs = array( 'p', 'css', 'js', 'viewport', 'header' );
 	$r = array();
 	if ( array_key_exists('p', $args) ) {
 		$p = $args['p'];
@@ -73,10 +73,6 @@ function weThemeHeaders( OutputPage &$out, &$text ){
 		if ( array_key_exists('p', $r)
 		&& array_key_exists( $r->p, $wgWEthemePartners ) ) {
 			$p = $wgWEthemePartners[$r->p];
-			if ( array_key_exists( 'ie', $r ) ) {
-				$wgOut->addScript('<!--['
-					. preg_replace( '/[^- a-zA-Z0-9]/', '', $r->ie ). ']>');
-			}
 			if ( array_key_exists( 'css', $r ) ) {
 				$f = preg_replace( '|[^-_:./a-zA-Z0-9]|', '',
 					$r->css );
@@ -106,9 +102,6 @@ function weThemeHeaders( OutputPage &$out, &$text ){
 					fclose( $h );
 					$wgOut->addScript ( $o ) ;
 				}
-			}
-			if ( array_key_exists( 'ie', $r ) ) {
-				$wgOut->addScript('<![endif]-->');
 			}
 		}
 	}
