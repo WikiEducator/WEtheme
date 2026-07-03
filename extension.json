@@ -1,0 +1,19 @@
+{
+	"name": "WEtheme",
+	"version": "0.6.0",
+	"author": [
+		"Jim Tittsler"
+	],
+	"url": "http://WikiEducator.org/Extension:WEtheme",
+	"description": "Allow theming pages",
+	"license-name": "MIT",
+	"type": "parserhook",
+	"AutoloadClasses": {
+		"WEthemeHooks": "WEtheme.php"
+	},
+	"Hooks": {
+		"ParserFirstCallInit": "WEthemeHooks::onParserFirstCallInit",
+		"OutputPageBeforeHTML": "WEthemeHooks::onOutputPageBeforeHTML"
+	},
+	"manifest_version": 2
+}
