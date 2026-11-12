@@ -2,18 +2,27 @@
 	"name": "WEtheme",
 	"version": "0.6.0",
 	"author": [
-		"Jim Tittsler"
+		"[https://wikieducator.org/User:JimTittsler Jim Tittsler]"
 	],
-	"url": "http://WikiEducator.org/Extension:WEtheme",
+	"url": "https://wikieducator.org/Extension:WEtheme",
 	"description": "Allow theming pages",
 	"license-name": "MIT",
 	"type": "parserhook",
+	"requires": {
+		"MediaWiki": ">= 1.35.0"
+	},
 	"AutoloadClasses": {
 		"WEthemeHooks": "WEtheme.php"
 	},
 	"Hooks": {
 		"ParserFirstCallInit": "WEthemeHooks::onParserFirstCallInit",
 		"OutputPageBeforeHTML": "WEthemeHooks::onOutputPageBeforeHTML"
+	},
+	"config": {
+		"WEthemePartners": {
+			"value": {},
+			"description": "Map from partner name (the p= attribute) to the URL prefix for its CSS/JS; local prefixes are also used to find header= files under $IP"
+		}
 	},
 	"manifest_version": 2
 }

@@ -5,7 +5,7 @@
  * @subpackage WEtheme
  * @version 0.6
  * @author Jim Tittsler <jimt@OER.me>
- * @licence MIT
+ * @license MIT
  */
 
 if( !defined( 'MEDIAWIKI' ) ) {
@@ -20,17 +20,12 @@ class WEthemeHooks {
 		return true;
 	}
 
-	public static function weThemeLog( $msg ) {
-		error_log( date('c') . ' ' . $msg . "\n", 3, '/tmp/WEtheme.log' );
-	}
-
 	public static function weThemeTag( $input, array $args, Parser $parser ) {
 		global $wgWEthemePartners;
 		// FIXME add author, keywords
 		$weThemeArgs = array( 'p', 'css', 'js', 'viewport', 'header' );
 		$r = array();
 		if ( array_key_exists('p', $args) ) {
-			$p = $args['p'];
 			if ( array_key_exists($args['p'], $wgWEthemePartners) ) {
 				//embed marker in wikitext
 				foreach ( $weThemeArgs as $a ) {
@@ -46,7 +41,7 @@ class WEthemeHooks {
 
 	public static function onOutputPageBeforeHTML( OutputPage &$out, &$text ) {
 		global $IP;
-		global $wgWEthemePartners, $wgWEthemePrefix;
+		global $wgWEthemePartners;
 
 		// look for our magic comment, and add headers when detected
 		//   perform simple sanity check on validity
@@ -56,39 +51,47 @@ class WEthemeHooks {
 				return true;
 		}
 		foreach ( $matches[1] as $m ) {
-			$r = json_decode( @base64_decode( $m ) );
+			$r = json_decode( base64_decode( $m ), true );
+			if ( !is_array( $r ) ) {
+				continue;
+			}
 
-			if ( array_key_exists('p', $r)
-			&& array_key_exists( $r->p, $wgWEthemePartners ) ) {
-				$p = $wgWEthemePartners[$r->p];
-				if ( array_key_exists( 'css', $r ) ) {
+			if ( isset( $r['p'] )
+			&& array_key_exists( $r['p'], $wgWEthemePartners ) ) {
+				$p = $wgWEthemePartners[$r['p']];
+				// css= and js= must stay inside the partner's prefix
+				if ( isset( $r['css'] ) ) {
 					$f = preg_replace( '|[^-_:./a-zA-Z0-9]|', '',
-						$r->css );
-					$out->addScript('<link href="' . $p . $f . '" rel="stylesheet" type="text/css">' . "\n");
+						$r['css'] );
+					if ( strpos( $f, '..' ) === false ) {
+						$out->addScript('<link href="' . $p . $f . '" rel="stylesheet" type="text/css">' . "\n");
+					}
 				}
-				if ( array_key_exists( 'js', $r ) ) {
+				if ( isset( $r['js'] ) ) {
 					$f = preg_replace( '|[^-_:./a-zA-Z0-9]|', '',
-						$r->js );
-					$out->addScript('<script type="text/javascript" src="' . $p . $f . '"></script>' . "\n");
+						$r['js'] );
+					if ( strpos( $f, '..' ) === false ) {
+						$out->addScript('<script type="text/javascript" src="' . $p . $f . '"></script>' . "\n");
+					}
 				}
-				if ( array_key_exists( 'viewport', $r ) ) {
+				if ( isset( $r['viewport'] ) ) {
 					//FIXME do a decent job of sanitizing viewport
 					$f = preg_replace( '/[^-=., a-zA-Z0-9]/',
-						'', $r->viewport);
-					$out->addScript('<meta name="viewport" content="' . $f . ' />' . "\n");
+						'', $r['viewport']);
+					$out->addScript('<meta name="viewport" content="' . $f . '" />' . "\n");
 				}
-				if ( array_key_exists( 'header', $r ) ) {
+				if ( isset( $r['header'] ) ) {
 					$f = preg_replace( '/[^-=., a-zA-Z0-9]/',
-						'', $r->header);
+						'', $r['header']);
 					$f = preg_replace( '/\.{2,}/', '.', $f);
 					$pathname = "$IP/$p$f";
 					$pathname = preg_replace( '|\/{2,}|', '/',
 						$pathname );
-					if ( is_readable( $pathname ) ) {
-						$h = fopen( $pathname, 'r' );
-						$o = fread( $h, filesize( $pathname ) );
-						fclose( $h );
-						$out->addScript ( $o ) ;
+					if ( is_file( $pathname ) && is_readable( $pathname ) ) {
+						$o = file_get_contents( $pathname );
+						if ( $o !== false && $o !== '' ) {
+							$out->addScript( $o );
+						}
 					}
 				}
 			}
