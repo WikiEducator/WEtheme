@@ -39,7 +39,7 @@ class WEthemeHooks {
 		return '';
 	}
 
-	public static function onOutputPageBeforeHTML( OutputPage &$out, &$text ) {
+	public static function onOutputPageBeforeHTML( OutputPage $out, &$text ) {
 		global $IP;
 		global $wgWEthemePartners;
 
